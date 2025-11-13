@@ -24,13 +24,20 @@ A personal dashboard and management system built with Next.js 14, TypeScript, an
 npm install
 ```
 
-2. Run the development server:
+2. Create a `.env.local` file in the root directory with your Supabase credentials:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-url-here
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key-here
+```
+
+3. Run the development server:
 
 ```bash
 npm run dev
 ```
 
-3. Open [http://localhost:3000](http://localhost:3000) in your browser.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 The app will automatically redirect to the dashboard.
 
@@ -44,11 +51,22 @@ app/
 ├── dashboard/          # Dashboard page
 ├── todos/              # Todos page
 ├── bills/              # Bills & Due Dates page
-└── business/           # business page
+└── business/           # Business page
 
 components/
 ├── Navigation.tsx      # Navigation bar component
 └── PageHeader.tsx      # Reusable page header component
+
+lib/
+├── supabase/
+│   └── client.ts       # Supabase client configuration
+└── data/
+    ├── todos.ts        # Todo data helpers
+    ├── bills.ts        # Bill data helpers
+    └── teagueJobs.ts   # Teague job data helpers
+
+types/
+└── db.ts               # TypeScript types for database tables
 ```
 
 ## Styling

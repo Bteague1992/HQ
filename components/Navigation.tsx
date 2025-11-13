@@ -38,6 +38,7 @@ export default function Navigation() {
             <NavLink href="/todos">Todos</NavLink>
             <NavLink href="/bills">Bills & Due Dates</NavLink>
             <NavLink href="/business">Business</NavLink>
+            <NavLink href="/test-db">🔧 Test DB</NavLink>
           </div>
         </div>
       </div>
