@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BillType, NeedWant, BillFrequency } from "@/types/db";
 import { getFrequencyLabel } from "@/lib/utils/billDates";
+import { useToast } from "@/contexts/ToastContext";
 
 interface BillFormProps {
   bill?: {
@@ -44,22 +45,23 @@ export default function BillForm({ bill, onSubmit }: BillFormProps) {
   const [interestRate, setInterestRate] = useState(bill?.interest_rate?.toString() || "");
   const [notes, setNotes] = useState(bill?.notes || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToast();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (!accountName.trim()) {
-      alert("Please enter an account name");
+      toast.warning("Please enter an account name");
       return;
     }
 
     if (!amount || parseFloat(amount) <= 0) {
-      alert("Please enter a valid amount");
+      toast.warning("Please enter a valid amount");
       return;
     }
 
     if (!dueDate) {
-      alert("Please select a due date");
+      toast.warning("Please select a due date");
       return;
     }
 

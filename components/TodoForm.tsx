@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { TaskPriority } from "@/types/db";
+import { useToast } from "@/contexts/ToastContext";
 
 interface TodoFormProps {
   todo?: {
@@ -30,12 +31,13 @@ export default function TodoForm({ todo, onSubmit }: TodoFormProps) {
   );
   const [dueDate, setDueDate] = useState(todo?.due_date || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToast();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     if (!title.trim()) {
-      alert("Please enter a title");
+      toast.warning("Please enter a title");
       return;
     }
 

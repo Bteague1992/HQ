@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { JobStatus, TeagueJob } from "@/types/db";
+import { useToast } from "@/contexts/ToastContext";
 
 interface JobFormProps {
   job?: TeagueJob | null;
@@ -28,6 +29,7 @@ export default function JobForm({ job, onSubmit, onCancel }: JobFormProps) {
   const [status, setStatus] = useState<JobStatus>("lead");
   const [scheduledDate, setScheduledDate] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const toast = useToast();
 
   // Populate form when editing
   useEffect(() => {
@@ -57,12 +59,12 @@ export default function JobForm({ job, onSubmit, onCancel }: JobFormProps) {
     e.preventDefault();
 
     if (!clientName.trim()) {
-      alert("Please enter a client name");
+      toast.warning("Please enter a client name");
       return;
     }
 
     if (!jobDescription.trim()) {
-      alert("Please enter a job description");
+      toast.warning("Please enter a job description");
       return;
     }
 

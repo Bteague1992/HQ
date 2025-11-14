@@ -17,8 +17,10 @@ import { getBillsForUser } from "@/lib/data/bills";
 import { getTeagueJobsForUser } from "@/lib/data/teagueJobs";
 import { supabase } from "@/lib/supabase/client";
 import { Todo, Bill, TeagueJob } from "@/types/db";
+import { useToast } from "@/contexts/ToastContext";
 
 export default function DashboardPage() {
+  const toast = useToast();
   const [activeTodos, setActiveTodos] = useState<Todo[]>([]);
   const [weekTodos, setWeekTodos] = useState<Todo[]>([]);
   const [upcomingBills, setUpcomingBills] = useState<Bill[]>([]);
@@ -67,9 +69,10 @@ export default function DashboardPage() {
 
       // Remove from active todos list
       setActiveTodos(activeTodos.filter((todo) => todo.id !== todoId));
+      toast.success("Todo marked as done!");
     } catch (error) {
       console.error("Error marking todo as done:", error);
-      alert("Failed to mark todo as done. Please try again.");
+      toast.error("Failed to mark todo as done. Please try again.");
     }
   }
 

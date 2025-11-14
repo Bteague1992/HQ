@@ -9,13 +9,14 @@ import JobForm from "@/components/JobForm";
 import JobList from "@/components/JobList";
 import JobStats from "@/components/JobStats";
 import Modal from "@/components/Modal";
+import { useToast } from "@/contexts/ToastContext";
 
 const DEMO_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
 
 export default function BusinessPage() {
+  const toast = useToast();
   const [jobs, setJobs] = useState<TeagueJob[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string>("");
   const [showAll, setShowAll] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<TeagueJob | null>(null);
@@ -29,13 +30,12 @@ export default function BusinessPage() {
 
   async function fetchJobs() {
     setIsLoading(true);
-    setError("");
     try {
       const data = await getTeagueJobsForUser(DEMO_USER_ID);
       setJobs(data);
     } catch (err) {
       console.error("Error fetching jobs:", err);
-      setError("Failed to load jobs. Please refresh the page.");
+      toast.error("Failed to load jobs. Please refresh the page.");
     } finally {
       setIsLoading(false);
     }
@@ -105,10 +105,11 @@ export default function BusinessPage() {
       // Close modal and reset
       setIsModalOpen(false);
       setEditingJob(null);
+      toast.success(editingJob ? "Job updated!" : "Job added!");
       return true;
     } catch (err) {
       console.error("Error saving job:", err);
-      setError(
+      toast.error(
         editingJob
           ? "Failed to update job. Please try again."
           : "Failed to add job. Please try again."
@@ -132,9 +133,10 @@ export default function BusinessPage() {
 
       // Remove from local state
       setJobs(jobs.filter((job) => job.id !== jobId));
+      toast.success("Job deleted!");
     } catch (err) {
       console.error("Error deleting job:", err);
-      setError("Failed to delete job. Please try again.");
+      toast.error("Failed to delete job. Please try again.");
     }
   }
 
@@ -168,9 +170,10 @@ export default function BusinessPage() {
           job.id === jobId ? { ...job, status: newStatus } : job
         )
       );
+      toast.success("Job status updated!");
     } catch (err) {
       console.error("Error updating job status:", err);
-      setError("Failed to update job status. Please try again.");
+      toast.error("Failed to update job status. Please try again.");
     }
   }
 
@@ -258,12 +261,6 @@ export default function BusinessPage() {
           Add Job
         </button>
       </div>
-
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700 text-sm">{error}</p>
-        </div>
-      )}
 
       {/* Stats */}
       {!isLoading && (

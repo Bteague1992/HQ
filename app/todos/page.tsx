@@ -9,13 +9,14 @@ import TodoForm from "@/components/TodoForm";
 import TodoList from "@/components/TodoList";
 import TodoFilters from "@/components/TodoFilters";
 import Modal from "@/components/Modal";
+import { useToast } from "@/contexts/ToastContext";
 
 const DEMO_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
 
 export default function TodosPage() {
+  const toast = useToast();
   const [todos, setTodos] = useState<Todo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
 
@@ -34,13 +35,12 @@ export default function TodosPage() {
 
   async function fetchTodos() {
     setIsLoading(true);
-    setError("");
     try {
       const data = await getTodosForUser(DEMO_USER_ID);
       setTodos(data);
     } catch (err) {
       console.error("Error fetching todos:", err);
-      setError("Failed to load todos. Please refresh the page.");
+      toast.error("Failed to load todos. Please refresh the page.");
     } finally {
       setIsLoading(false);
     }
@@ -102,10 +102,11 @@ export default function TodosPage() {
 
       setIsModalOpen(false);
       setEditingTodo(null);
+      toast.success(editingTodo ? "Todo updated!" : "Todo added!");
       return true;
     } catch (err) {
       console.error("Error saving todo:", err);
-      setError(
+      toast.error(
         editingTodo
           ? "Failed to update todo. Please try again."
           : "Failed to add todo. Please try again."
@@ -129,9 +130,10 @@ export default function TodosPage() {
           todo.id === todoId ? { ...todo, is_active: !currentActive } : todo
         )
       );
+      toast.success(currentActive ? "Todo deactivated" : "Todo activated!");
     } catch (err) {
       console.error("Error toggling active:", err);
-      setError("Failed to update todo. Please try again.");
+      toast.error("Failed to update todo. Please try again.");
     }
   }
 
@@ -152,9 +154,10 @@ export default function TodosPage() {
             : todo
         )
       );
+      toast.success("Todo marked as done!");
     } catch (err) {
       console.error("Error marking todo as done:", err);
-      setError("Failed to mark todo as done. Please try again.");
+      toast.error("Failed to mark todo as done. Please try again.");
     }
   }
 
@@ -175,9 +178,10 @@ export default function TodosPage() {
             : todo
         )
       );
+      toast.success("Todo reopened!");
     } catch (err) {
       console.error("Error reopening todo:", err);
-      setError("Failed to reopen todo. Please try again.");
+      toast.error("Failed to reopen todo. Please try again.");
     }
   }
 
@@ -278,9 +282,10 @@ export default function TodosPage() {
 
       // Remove from local state
       setTodos(todos.filter((todo) => todo.id !== todoId));
+      toast.success("Todo deleted!");
     } catch (err) {
       console.error("Error deleting todo:", err);
-      setError("Failed to delete todo. Please try again.");
+      toast.error("Failed to delete todo. Please try again.");
     }
   }
 
@@ -300,12 +305,6 @@ export default function TodosPage() {
           + Add Todo
         </button>
       </div>
-
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700 text-sm">{error}</p>
-        </div>
-      )}
 
       {/* Filters */}
       <TodoFilters

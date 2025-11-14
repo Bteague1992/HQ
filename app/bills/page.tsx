@@ -10,13 +10,14 @@ import BillList from "@/components/BillList";
 import BillFilters from "@/components/BillFilters";
 import BillStats from "@/components/BillStats";
 import Modal from "@/components/Modal";
+import { useToast } from "@/contexts/ToastContext";
 
 const DEMO_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
 
 export default function BillsPage() {
+  const toast = useToast();
   const [bills, setBills] = useState<Bill[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBill, setEditingBill] = useState<Bill | null>(null);
 
@@ -38,7 +39,6 @@ export default function BillsPage() {
 
   async function fetchBills() {
     setIsLoading(true);
-    setError("");
     try {
       const data = await getBillsForUser(DEMO_USER_ID);
       // Sort by due_date ascending
@@ -49,7 +49,7 @@ export default function BillsPage() {
       setBills(sorted);
     } catch (err) {
       console.error("Error fetching bills:", err);
-      setError("Failed to load bills. Please refresh the page.");
+      toast.error("Failed to load bills. Please refresh the page.");
     } finally {
       setIsLoading(false);
     }
@@ -132,10 +132,11 @@ export default function BillsPage() {
 
       setIsModalOpen(false);
       setEditingBill(null);
+      toast.success(editingBill ? "Bill updated!" : "Bill added!");
       return true;
     } catch (err) {
       console.error("Error saving bill:", err);
-      setError(
+      toast.error(
         editingBill
           ? "Failed to update bill. Please try again."
           : "Failed to add bill. Please try again."
@@ -159,9 +160,10 @@ export default function BillsPage() {
           bill.id === billId ? { ...bill, is_active: false } : bill
         )
       );
+      toast.success("Bill archived!");
     } catch (err) {
       console.error("Error archiving bill:", err);
-      setError("Failed to archive bill. Please try again.");
+      toast.error("Failed to archive bill. Please try again.");
     }
   }
 
@@ -180,9 +182,10 @@ export default function BillsPage() {
           bill.id === billId ? { ...bill, is_active: true } : bill
         )
       );
+      toast.success("Bill restored!");
     } catch (err) {
       console.error("Error restoring bill:", err);
-      setError("Failed to restore bill. Please try again.");
+      toast.error("Failed to restore bill. Please try again.");
     }
   }
 
@@ -198,9 +201,10 @@ export default function BillsPage() {
 
       // Remove from local state
       setBills(bills.filter((bill) => bill.id !== billId));
+      toast.success("Bill deleted!");
     } catch (err) {
       console.error("Error deleting bill:", err);
-      setError("Failed to delete bill. Please try again.");
+      toast.error("Failed to delete bill. Please try again.");
     }
   }
 
@@ -305,12 +309,6 @@ export default function BillsPage() {
           + Add Bill
         </button>
       </div>
-
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700 text-sm">{error}</p>
-        </div>
-      )}
 
       {/* Stats Row */}
       <BillStats bills={bills} />
