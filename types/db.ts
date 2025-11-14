@@ -20,6 +20,34 @@ export type JobStatus =
   | "completed"
   | "lost";
 
+export type BillFrequency =
+  | 'one_time'
+  | 'weekly'
+  | 'biweekly'
+  | 'monthly'
+  | 'bimonthly'
+  | 'quarterly'
+  | 'semiannual'
+  | 'annual';
+
+export type AccountType = 
+  | 'checking'
+  | 'savings'
+  | 'credit_card'
+  | 'investment'
+  | 'cash'
+  | 'loan'
+  | 'other';
+
+export type IncomeFrequency = 
+  | 'one_time'
+  | 'weekly'
+  | 'biweekly'
+  | 'monthly'
+  | 'bimonthly'
+  | 'quarterly'
+  | 'annual';
+
 export interface Todo {
   id: string;
   user_id: string;
@@ -47,6 +75,35 @@ export interface Bill {
   frequency: BillFrequency; // How often bill recurs
   autopay: boolean;
   interest_rate: number | null; // numeric in DB
+  is_active: boolean;
+  notes: string | null;
+  account_id: string | null; // NEW: Link to account
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Account {
+  id: string;
+  user_id: string;
+  account_name: string;
+  account_type: AccountType;
+  current_balance: number;
+  institution_name: string | null;
+  account_number_last4: string | null;
+  is_active: boolean;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Income {
+  id: string;
+  user_id: string;
+  source_name: string;
+  amount: number;
+  frequency: IncomeFrequency;
+  next_date: string;
+  account_id: string | null;
   is_active: boolean;
   notes: string | null;
   created_at: string;

@@ -3,8 +3,9 @@
 import { useEffect, useState, useMemo } from "react";
 import PageHeader from "@/components/PageHeader";
 import { getBillsForUser } from "@/lib/data/bills";
+import { getAccountsForUser } from "@/lib/data/accounts";
 import { supabase } from "@/lib/supabase/client";
-import { Bill, BillType, NeedWant } from "@/types/db";
+import { Bill, BillType, NeedWant, Account } from "@/types/db";
 import BillForm from "@/components/BillForm";
 import BillList from "@/components/BillList";
 import BillFilters from "@/components/BillFilters";
@@ -17,6 +18,7 @@ const DEMO_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
 export default function BillsPage() {
   const toast = useToast();
   const [bills, setBills] = useState<Bill[]>([]);
+  const [accounts, setAccounts] = useState<Account[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBill, setEditingBill] = useState<Bill | null>(null);
@@ -40,13 +42,17 @@ export default function BillsPage() {
   async function fetchBills() {
     setIsLoading(true);
     try {
-      const data = await getBillsForUser(DEMO_USER_ID);
+      const [billsData, accountsData] = await Promise.all([
+        getBillsForUser(DEMO_USER_ID),
+        getAccountsForUser(DEMO_USER_ID),
+      ]);
       // Sort by due_date ascending
-      const sorted = data.sort(
+      const sorted = billsData.sort(
         (a, b) =>
           new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
       );
       setBills(sorted);
+      setAccounts(accountsData.filter((a) => a.is_active));
     } catch (err) {
       console.error("Error fetching bills:", err);
       toast.error("Failed to load bills. Please refresh the page.");
@@ -66,6 +72,7 @@ export default function BillsPage() {
     autopay: boolean;
     interest_rate: number | null;
     notes: string;
+    account_id: string | null;
   }) {
     try {
       if (editingBill) {
@@ -83,6 +90,7 @@ export default function BillsPage() {
             autopay: billData.autopay,
             interest_rate: billData.interest_rate,
             notes: billData.notes || null,
+            account_id: billData.account_id,
           })
           .eq("id", editingBill.id)
           .select()
@@ -115,6 +123,7 @@ export default function BillsPage() {
             autopay: billData.autopay,
             interest_rate: billData.interest_rate,
             notes: billData.notes || null,
+            account_id: billData.account_id,
             is_active: true,
           })
           .select()
@@ -345,7 +354,11 @@ export default function BillsPage() {
         onClose={handleCloseModal}
         title={editingBill ? "Edit Bill" : "Add New Bill"}
       >
-        <BillForm bill={editingBill} onSubmit={handleSubmitBill} />
+        <BillForm
+          bill={editingBill}
+          accounts={accounts}
+          onSubmit={handleSubmitBill}
+        />
       </Modal>
     </div>
   );

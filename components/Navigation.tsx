@@ -36,7 +36,9 @@ export default function Navigation() {
           <div className="flex gap-6">
             <NavLink href="/dashboard">Dashboard</NavLink>
             <NavLink href="/todos">Todos</NavLink>
-            <NavLink href="/bills">Bills & Due Dates</NavLink>
+            <NavLink href="/bills">Bills</NavLink>
+            <NavLink href="/accounts">Accounts</NavLink>
+            <NavLink href="/income">Income</NavLink>
             <NavLink href="/business">Business</NavLink>
             <NavLink href="/test-db">🔧 Test DB</NavLink>
           </div>
