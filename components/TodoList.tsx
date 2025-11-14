@@ -8,6 +8,8 @@ interface TodoListProps {
   onToggleActive: (todoId: string, currentActive: boolean) => void;
   onMarkDone: (todoId: string) => void;
   onReopenTodo: (todoId: string) => void;
+  onEdit: (todo: Todo) => void;
+  onDelete: (todoId: string) => void;
 }
 
 export default function TodoList({
@@ -16,6 +18,8 @@ export default function TodoList({
   onToggleActive,
   onMarkDone,
   onReopenTodo,
+  onEdit,
+  onDelete,
 }: TodoListProps) {
   if (isLoading) {
     return (
@@ -120,6 +124,12 @@ export default function TodoList({
               </div>
 
               <div className="flex flex-col gap-2 flex-shrink-0">
+                <button
+                  onClick={() => onEdit(todo)}
+                  className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                >
+                  Edit
+                </button>
                 {todo.status !== "done" && (
                   <>
                     <button
@@ -150,6 +160,12 @@ export default function TodoList({
                     Reopen
                   </button>
                 )}
+                <button
+                  onClick={() => onDelete(todo.id)}
+                  className="px-3 py-1 text-xs font-medium bg-red-100 text-red-700 rounded hover:bg-red-200 transition-colors"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           </div>

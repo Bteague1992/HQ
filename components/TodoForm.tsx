@@ -4,7 +4,15 @@ import { useState } from "react";
 import { TaskPriority } from "@/types/db";
 
 interface TodoFormProps {
-  onAdd: (todoData: {
+  todo?: {
+    id: string;
+    title: string;
+    description: string | null;
+    category: string | null;
+    priority: TaskPriority;
+    due_date: string | null;
+  } | null;
+  onSubmit: (todoData: {
     title: string;
     description: string;
     category: string;
@@ -13,12 +21,12 @@ interface TodoFormProps {
   }) => Promise<boolean>;
 }
 
-export default function TodoForm({ onAdd }: TodoFormProps) {
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
-  const [priority, setPriority] = useState<TaskPriority>("medium");
-  const [dueDate, setDueDate] = useState("");
+export default function TodoForm({ todo, onSubmit }: TodoFormProps) {
+  const [title, setTitle] = useState(todo?.title || "");
+  const [description, setDescription] = useState(todo?.description || "");
+  const [category, setCategory] = useState(todo?.category || "");
+  const [priority, setPriority] = useState<TaskPriority>(todo?.priority || "medium");
+  const [dueDate, setDueDate] = useState(todo?.due_date || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -30,7 +38,7 @@ export default function TodoForm({ onAdd }: TodoFormProps) {
     }
 
     setIsSubmitting(true);
-    const success = await onAdd({
+    const success = await onSubmit({
       title: title.trim(),
       description: description.trim(),
       category: category.trim(),
@@ -149,7 +157,7 @@ export default function TodoForm({ onAdd }: TodoFormProps) {
         disabled={isSubmitting}
         className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-indigo-400 disabled:cursor-not-allowed font-medium"
       >
-        {isSubmitting ? "Adding..." : "Add Todo"}
+        {isSubmitting ? (todo ? "Updating..." : "Adding...") : (todo ? "Update Todo" : "Add Todo")}
       </button>
     </form>
   );

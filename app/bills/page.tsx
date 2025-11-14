@@ -192,10 +192,7 @@ export default function BillsPage() {
     }
 
     try {
-      const { error } = await supabase
-        .from("bills")
-        .delete()
-        .eq("id", billId);
+      const { error } = await supabase.from("bills").delete().eq("id", billId);
 
       if (error) throw error;
 
@@ -249,7 +246,14 @@ export default function BillsPage() {
 
       return true;
     });
-  }, [bills, statusFilter, typeFilter, needWantFilter, urgencyFilter, searchQuery]);
+  }, [
+    bills,
+    statusFilter,
+    typeFilter,
+    needWantFilter,
+    urgencyFilter,
+    searchQuery,
+  ]);
 
   // Count active filters
   const activeFilterCount = useMemo(() => {

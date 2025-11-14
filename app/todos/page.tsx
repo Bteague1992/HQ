@@ -17,6 +17,7 @@ export default function TodosPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTodo, setEditingTodo] = useState<Todo | null>(null);
 
   // Filter states
   const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">("all");
@@ -45,7 +46,7 @@ export default function TodosPage() {
     }
   }
 
-  async function handleAddTodo(todoData: {
+  async function handleSubmitTodo(todoData: {
     title: string;
     description: string;
     category: string;
@@ -53,30 +54,62 @@ export default function TodosPage() {
     due_date: string | null;
   }) {
     try {
-      const { data, error } = await supabase
-        .from("todos")
-        .insert({
-          user_id: DEMO_USER_ID,
-          title: todoData.title,
-          description: todoData.description || null,
-          category: todoData.category || null,
-          priority: todoData.priority,
-          due_date: todoData.due_date || null,
-          status: "todo",
-          is_active: false,
-        })
-        .select()
-        .single();
+      if (editingTodo) {
+        // Update existing todo
+        const { data, error } = await supabase
+          .from("todos")
+          .update({
+            title: todoData.title,
+            description: todoData.description || null,
+            category: todoData.category || null,
+            priority: todoData.priority,
+            due_date: todoData.due_date || null,
+          })
+          .eq("id", editingTodo.id)
+          .select()
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // Add new todo to the list
-      setTodos([data as Todo, ...todos]);
-      setIsModalOpen(false); // Close modal on success
+        // Update local state
+        setTodos(
+          todos.map((todo) =>
+            todo.id === editingTodo.id ? (data as Todo) : todo
+          )
+        );
+      } else {
+        // Add new todo
+        const { data, error } = await supabase
+          .from("todos")
+          .insert({
+            user_id: DEMO_USER_ID,
+            title: todoData.title,
+            description: todoData.description || null,
+            category: todoData.category || null,
+            priority: todoData.priority,
+            due_date: todoData.due_date || null,
+            status: "todo",
+            is_active: false,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Add new todo to the list
+        setTodos([data as Todo, ...todos]);
+      }
+
+      setIsModalOpen(false);
+      setEditingTodo(null);
       return true;
     } catch (err) {
-      console.error("Error adding todo:", err);
-      setError("Failed to add todo. Please try again.");
+      console.error("Error saving todo:", err);
+      setError(
+        editingTodo
+          ? "Failed to update todo. Please try again."
+          : "Failed to add todo. Please try again."
+      );
       return false;
     }
   }
@@ -218,6 +251,39 @@ export default function TodosPage() {
     setSearchQuery("");
   }
 
+  function handleOpenAddModal() {
+    setEditingTodo(null);
+    setIsModalOpen(true);
+  }
+
+  function handleOpenEditModal(todo: Todo) {
+    setEditingTodo(todo);
+    setIsModalOpen(true);
+  }
+
+  function handleCloseModal() {
+    setIsModalOpen(false);
+    setEditingTodo(null);
+  }
+
+  async function handleDeleteTodo(todoId: string) {
+    if (!confirm("Are you sure you want to delete this todo?")) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from("todos").delete().eq("id", todoId);
+
+      if (error) throw error;
+
+      // Remove from local state
+      setTodos(todos.filter((todo) => todo.id !== todoId));
+    } catch (err) {
+      console.error("Error deleting todo:", err);
+      setError("Failed to delete todo. Please try again.");
+    }
+  }
+
   return (
     <div>
       <div className="flex items-start justify-between mb-6">
@@ -228,7 +294,7 @@ export default function TodosPage() {
           />
         </div>
         <button
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleOpenAddModal}
           className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium flex-shrink-0"
         >
           + Add Todo
@@ -280,15 +346,17 @@ export default function TodosPage() {
         onToggleActive={handleToggleActive}
         onMarkDone={handleMarkDone}
         onReopenTodo={handleReopenTodo}
+        onEdit={handleOpenEditModal}
+        onDelete={handleDeleteTodo}
       />
 
-      {/* Add Todo Modal */}
+      {/* Add/Edit Todo Modal */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        title="Add New Todo"
+        onClose={handleCloseModal}
+        title={editingTodo ? "Edit Todo" : "Add New Todo"}
       >
-        <TodoForm onAdd={handleAddTodo} />
+        <TodoForm todo={editingTodo} onSubmit={handleSubmitTodo} />
       </Modal>
     </div>
   );
