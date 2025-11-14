@@ -6,36 +6,45 @@ import TodaysTasks from "@/components/dashboard/TodaysTasks";
 import UpcomingBills from "@/components/dashboard/UpcomingBills";
 import ThisWeekTodos from "@/components/dashboard/ThisWeekTodos";
 import PendingJobs from "@/components/dashboard/PendingJobs";
+import DashboardStats from "@/components/dashboard/DashboardStats";
 import {
   getActiveTodos,
   getThisWeekTodos,
   getUpcomingBills,
   getPendingJobs,
 } from "@/lib/data/dashboard";
+import { getBillsForUser } from "@/lib/data/bills";
+import { getTeagueJobsForUser } from "@/lib/data/teagueJobs";
 import { Todo, Bill, TeagueJob } from "@/types/db";
 
 export default function DashboardPage() {
   const [activeTodos, setActiveTodos] = useState<Todo[]>([]);
   const [weekTodos, setWeekTodos] = useState<Todo[]>([]);
   const [upcomingBills, setUpcomingBills] = useState<Bill[]>([]);
+  const [allBills, setAllBills] = useState<Bill[]>([]);
   const [pendingJobs, setPendingJobs] = useState<TeagueJob[]>([]);
+  const [allJobs, setAllJobs] = useState<TeagueJob[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     async function fetchDashboardData() {
       setIsLoading(true);
       try {
-        const [active, week, bills, jobs] = await Promise.all([
+        const [active, week, bills, allBillsData, jobs, allJobsData] = await Promise.all([
           getActiveTodos(),
           getThisWeekTodos(),
           getUpcomingBills(),
+          getBillsForUser(),
           getPendingJobs(),
+          getTeagueJobsForUser(),
         ]);
 
         setActiveTodos(active);
         setWeekTodos(week);
         setUpcomingBills(bills);
+        setAllBills(allBillsData);
         setPendingJobs(jobs);
+        setAllJobs(allJobsData);
       } catch (error) {
         console.error("Error fetching dashboard data:", error);
       } finally {
@@ -79,6 +88,14 @@ export default function DashboardPage() {
         subtitle="Today's focus and upcoming obligations at a glance."
       />
 
+      {/* Stats Row */}
+      <DashboardStats
+        activeTodos={activeTodos}
+        allBills={allBills}
+        allJobs={allJobs}
+      />
+
+      {/* Main Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Top Row */}
         <TodaysTasks todos={activeTodos} />
