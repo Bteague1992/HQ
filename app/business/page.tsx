@@ -20,6 +20,7 @@ export default function BusinessPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingJob, setEditingJob] = useState<TeagueJob | null>(null);
   const [selectedStatuses, setSelectedStatuses] = useState<JobStatus[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Fetch jobs on mount
   useEffect(() => {
@@ -173,7 +174,7 @@ export default function BusinessPage() {
     }
   }
 
-  // Filter jobs based on showAll toggle and selected statuses
+  // Filter jobs based on showAll toggle, selected statuses, and search query
   const filteredJobs = (() => {
     let filtered = jobs;
 
@@ -189,6 +190,28 @@ export default function BusinessPage() {
           (job) => job.status !== "completed" && job.status !== "lost"
         );
       }
+    }
+
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter((job) => {
+        const matchesClient = job.client_name.toLowerCase().includes(query);
+        const matchesPhone = job.client_phone?.toLowerCase().includes(query);
+        const matchesEmail = job.client_email?.toLowerCase().includes(query);
+        const matchesDescription = job.job_description
+          .toLowerCase()
+          .includes(query);
+        const matchesConcerns = job.concerns?.toLowerCase().includes(query);
+
+        return (
+          matchesClient ||
+          matchesPhone ||
+          matchesEmail ||
+          matchesDescription ||
+          matchesConcerns
+        );
+      });
     }
 
     return filtered;
@@ -251,6 +274,43 @@ export default function BusinessPage() {
           onClearFilter={handleClearStatusFilter}
         />
       )}
+
+      {/* Search */}
+      <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
+        <div className="flex items-center gap-2">
+          <svg
+            className="w-5 h-5 text-gray-400"
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search by client name, phone, email, job description..."
+            className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="px-3 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+        {searchQuery && (
+          <p className="text-xs text-gray-500 mt-2">
+            Showing {filteredJobs.length} of {jobs.length} jobs
+          </p>
+        )}
+      </div>
 
       {/* Jobs list */}
       <JobList
