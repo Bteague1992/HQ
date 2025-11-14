@@ -2,7 +2,12 @@
 
 import { Bill } from "@/types/db";
 import Link from "next/link";
-import { getBillDueDate, getDaysUntilDue, isRecurringBill } from "@/lib/utils/billDates";
+import {
+  getBillDueDate,
+  getDaysUntilDue,
+  isRecurringBill,
+  getFrequencyLabel,
+} from "@/lib/utils/billDates";
 
 interface UpcomingBillsProps {
   bills: Bill[];
@@ -75,7 +80,7 @@ export default function UpcomingBills({ bills }: UpcomingBillsProps) {
                     </span>
                     {isRecurring && (
                       <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
-                        Day {bill.due_day_of_month}
+                        {getFrequencyLabel(bill.frequency)}
                       </span>
                     )}
                     {bill.autopay && (

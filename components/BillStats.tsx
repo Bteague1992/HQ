@@ -16,8 +16,27 @@ export default function BillStats({ bills }: BillStatsProps) {
     0
   );
 
-  // Monthly bills total (sum of all amounts)
-  const monthlyBills = activeBills.reduce((sum, bill) => sum + bill.amount, 0);
+  // Helper: Convert bill amount to monthly equivalent based on frequency
+  function getMonthlyAmount(bill: Bill): number {
+    const multipliers: Record<string, number> = {
+      weekly: 4.33, // ~4.33 weeks per month
+      biweekly: 2.17, // ~2.17 biweekly periods per month
+      monthly: 1,
+      bimonthly: 0.5, // every 2 months
+      quarterly: 0.33, // every 3 months
+      semiannual: 0.167, // every 6 months
+      annual: 0.083, // every 12 months
+      one_time: 0, // Don't count in recurring totals
+    };
+
+    return bill.amount * (multipliers[bill.frequency] || 0);
+  }
+
+  // Monthly bills total (normalized to monthly amounts)
+  const monthlyBills = activeBills.reduce(
+    (sum, bill) => sum + getMonthlyAmount(bill),
+    0
+  );
 
   // Annual total
   const annualBills = monthlyBills * 12;
@@ -37,14 +56,14 @@ export default function BillStats({ bills }: BillStatsProps) {
     .filter((b) => b.interest_rate && b.interest_rate > 10 && b.balance)
     .reduce((sum, bill) => sum + (bill.balance || 0), 0);
 
-  // Needs vs Wants breakdown
+  // Needs vs Wants breakdown (monthly equivalent)
   const needsTotal = activeBills
     .filter((b) => b.need_or_want === "need")
-    .reduce((sum, bill) => sum + bill.amount, 0);
+    .reduce((sum, bill) => sum + getMonthlyAmount(bill), 0);
 
   const wantsTotal = activeBills
     .filter((b) => b.need_or_want === "want")
-    .reduce((sum, bill) => sum + bill.amount, 0);
+    .reduce((sum, bill) => sum + getMonthlyAmount(bill), 0);
 
   function formatCurrency(amount: number): string {
     return new Intl.NumberFormat("en-US", {

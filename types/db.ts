@@ -43,8 +43,8 @@ export interface Bill {
   need_or_want: NeedWant;
   amount: number; // numeric in DB
   balance: number | null; // numeric in DB
-  due_date: string | null; // For one-time bills
-  due_day_of_month: number | null; // For recurring bills (1-31)
+  due_date: string; // Next due date (always set)
+  frequency: BillFrequency; // How often bill recurs
   autopay: boolean;
   interest_rate: number | null; // numeric in DB
   is_active: boolean;

@@ -1,54 +1,51 @@
 // Helper functions for calculating bill due dates
 
+import { BillFrequency } from "@/types/db";
+
 /**
- * Get the next due date for a recurring bill based on day of month
+ * Calculate the next due date based on current due date and frequency
  */
-export function getNextDueDate(dayOfMonth: number): Date {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  
-  const currentDay = today.getDate();
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
-  
-  // Try this month first
-  let nextDate = new Date(currentYear, currentMonth, dayOfMonth);
-  
-  // If date already passed this month, use next month
-  if (nextDate <= today) {
-    nextDate = new Date(currentYear, currentMonth + 1, dayOfMonth);
+export function getNextDueDate(
+  currentDueDate: Date,
+  frequency: BillFrequency
+): Date {
+  const next = new Date(currentDueDate);
+
+  switch (frequency) {
+    case "weekly":
+      next.setDate(next.getDate() + 7);
+      break;
+    case "biweekly":
+      next.setDate(next.getDate() + 14);
+      break;
+    case "monthly":
+      next.setMonth(next.getMonth() + 1);
+      break;
+    case "bimonthly":
+      next.setMonth(next.getMonth() + 2);
+      break;
+    case "quarterly":
+      next.setMonth(next.getMonth() + 3);
+      break;
+    case "semiannual":
+      next.setMonth(next.getMonth() + 6);
+      break;
+    case "annual":
+      next.setFullYear(next.getFullYear() + 1);
+      break;
+    case "one_time":
+      // Don't advance, one-time bills don't recur
+      break;
   }
-  
-  // Handle edge cases (e.g., day 31 in months with 30 days)
-  // If the day doesn't exist in the target month, use last day of that month
-  const targetMonth = nextDate.getMonth();
-  const actualMonth = new Date(nextDate.getFullYear(), targetMonth + 1, 0).getMonth();
-  
-  if (nextDate.getDate() !== dayOfMonth) {
-    // Day doesn't exist in this month, use last day
-    nextDate = new Date(nextDate.getFullYear(), targetMonth + 1, 0);
-  }
-  
-  return nextDate;
+
+  return next;
 }
 
 /**
- * Get the actual due date for a bill (handles both recurring and one-time)
+ * Get the actual due date for a bill
  */
-export function getBillDueDate(bill: {
-  due_date: string | null;
-  due_day_of_month: number | null;
-}): Date {
-  if (bill.due_day_of_month !== null) {
-    // Recurring bill
-    return getNextDueDate(bill.due_day_of_month);
-  } else if (bill.due_date) {
-    // One-time bill
-    return new Date(bill.due_date);
-  } else {
-    // Fallback (shouldn't happen)
-    return new Date();
-  }
+export function getBillDueDate(bill: { due_date: string }): Date {
+  return new Date(bill.due_date);
 }
 
 /**
@@ -59,17 +56,31 @@ export function getDaysUntilDue(dueDate: Date): number {
   today.setHours(0, 0, 0, 0);
   const due = new Date(dueDate);
   due.setHours(0, 0, 0, 0);
-  
+
   const diffTime = due.getTime() - today.getTime();
   return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 }
 
 /**
- * Check if a bill is recurring
+ * Check if a bill is recurring (not one-time)
  */
-export function isRecurringBill(bill: {
-  due_day_of_month: number | null;
-}): boolean {
-  return bill.due_day_of_month !== null;
+export function isRecurringBill(bill: { frequency: BillFrequency }): boolean {
+  return bill.frequency !== "one_time";
 }
 
+/**
+ * Get a human-readable label for the frequency
+ */
+export function getFrequencyLabel(frequency: BillFrequency): string {
+  const labels: Record<BillFrequency, string> = {
+    one_time: "One-time",
+    weekly: "Weekly",
+    biweekly: "Bi-weekly",
+    monthly: "Monthly",
+    bimonthly: "Bi-monthly",
+    quarterly: "Quarterly",
+    semiannual: "Semi-annual",
+    annual: "Annual",
+  };
+  return labels[frequency];
+}

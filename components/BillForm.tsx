@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { BillType, NeedWant } from "@/types/db";
+import { BillType, NeedWant, BillFrequency } from "@/types/db";
+import { getFrequencyLabel } from "@/lib/utils/billDates";
 
 interface BillFormProps {
   onAdd: (billData: {
@@ -10,8 +11,8 @@ interface BillFormProps {
     need_or_want: NeedWant;
     amount: number;
     balance: number | null;
-    due_date: string | null;
-    due_day_of_month: number | null;
+    due_date: string;
+    frequency: BillFrequency;
     autopay: boolean;
     interest_rate: number | null;
     notes: string;
@@ -25,8 +26,7 @@ export default function BillForm({ onAdd }: BillFormProps) {
   const [amount, setAmount] = useState("");
   const [balance, setBalance] = useState("");
   const [dueDate, setDueDate] = useState("");
-  const [dueDayOfMonth, setDueDayOfMonth] = useState("");
-  const [isRecurring, setIsRecurring] = useState(true); // Default to recurring
+  const [frequency, setFrequency] = useState<BillFrequency>("monthly");
   const [autopay, setAutopay] = useState(false);
   const [interestRate, setInterestRate] = useState("");
   const [notes, setNotes] = useState("");
@@ -45,22 +45,9 @@ export default function BillForm({ onAdd }: BillFormProps) {
       return;
     }
 
-    if (isRecurring && !dueDayOfMonth) {
-      alert("Please enter a day of month (1-31) for recurring bills");
+    if (!dueDate) {
+      alert("Please select a due date");
       return;
-    }
-
-    if (!isRecurring && !dueDate) {
-      alert("Please select a due date for one-time bills");
-      return;
-    }
-
-    if (isRecurring) {
-      const day = parseInt(dueDayOfMonth);
-      if (day < 1 || day > 31) {
-        alert("Day of month must be between 1 and 31");
-        return;
-      }
     }
 
     setIsSubmitting(true);
@@ -70,8 +57,8 @@ export default function BillForm({ onAdd }: BillFormProps) {
       need_or_want: needOrWant,
       amount: parseFloat(amount),
       balance: balance ? parseFloat(balance) : null,
-      due_date: isRecurring ? null : dueDate,
-      due_day_of_month: isRecurring ? parseInt(dueDayOfMonth) : null,
+      due_date: dueDate,
+      frequency,
       autopay,
       interest_rate: interestRate ? parseFloat(interestRate) : null,
       notes: notes.trim(),
@@ -85,8 +72,7 @@ export default function BillForm({ onAdd }: BillFormProps) {
       setAmount("");
       setBalance("");
       setDueDate("");
-      setDueDayOfMonth("");
-      setIsRecurring(true);
+      setFrequency("monthly");
       setAutopay(false);
       setInterestRate("");
       setNotes("");
@@ -204,69 +190,60 @@ export default function BillForm({ onAdd }: BillFormProps) {
           </div>
         </div>
 
-        {/* Recurring Toggle */}
+        {/* Frequency */}
         <div>
-          <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-            <input
-              type="checkbox"
-              checked={isRecurring}
-              onChange={(e) => setIsRecurring(e.target.checked)}
-              className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
-            />
-            Recurring monthly bill
+          <label
+            htmlFor="frequency"
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Frequency <span className="text-red-500">*</span>
           </label>
-          <p className="text-xs text-gray-500 mt-1 ml-6">
-            {isRecurring 
-              ? "Bill repeats every month on the same day" 
-              : "One-time bill with a specific date"}
+          <select
+            id="frequency"
+            value={frequency}
+            onChange={(e) => setFrequency(e.target.value as BillFrequency)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+          >
+            <option value="one_time">One-time</option>
+            <option value="weekly">Weekly</option>
+            <option value="biweekly">Bi-weekly (every 2 weeks)</option>
+            <option value="monthly">Monthly</option>
+            <option value="bimonthly">Bi-monthly (every 2 months)</option>
+            <option value="quarterly">Quarterly (every 3 months)</option>
+            <option value="semiannual">Semi-annual (every 6 months)</option>
+            <option value="annual">Annual</option>
+          </select>
+          <p className="text-xs text-gray-500 mt-1">
+            {frequency === "one_time"
+              ? "Bill will not recur"
+              : `Bill will automatically advance after the due date`}
           </p>
         </div>
 
+        {/* Due Date */}
         <div className="grid grid-cols-2 gap-4">
-          {isRecurring ? (
-            <div>
-              <label
-                htmlFor="due_day_of_month"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Day of Month <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="due_day_of_month"
-                value={dueDayOfMonth}
-                onChange={(e) => setDueDayOfMonth(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                required={isRecurring}
-              >
-                <option value="">Select day...</option>
-                {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
-                  <option key={day} value={day}>
-                    {day}{day === 1 ? 'st' : day === 2 ? 'nd' : day === 3 ? 'rd' : day === 21 ? 'st' : day === 22 ? 'nd' : day === 23 ? 'rd' : day === 31 ? 'st' : 'th'} of every month
-                  </option>
-                ))}
-              </select>
-              <p className="text-xs text-gray-500 mt-1">
-                Bill will repeat on this day each month
-              </p>
-            </div>
-          ) : (
-            <div>
-              <label
-                htmlFor="due_date"
-                className="block text-sm font-medium text-gray-700 mb-1"
-              >
-                Due Date <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="date"
-                id="due_date"
-                value={dueDate}
-                onChange={(e) => setDueDate(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                required={!isRecurring}
-              />
-            </div>
-          )}
+          <div>
+            <label
+              htmlFor="due_date"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              {frequency === "one_time" ? "Due Date" : "Next Due Date"}{" "}
+              <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="date"
+              id="due_date"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              required
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              {frequency === "one_time"
+                ? "One-time payment date"
+                : "Auto-advances when date passes"}
+            </p>
+          </div>
 
           <div>
             <label
@@ -328,4 +305,3 @@ export default function BillForm({ onAdd }: BillFormProps) {
     </div>
   );
 }
-

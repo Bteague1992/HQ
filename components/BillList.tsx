@@ -1,7 +1,12 @@
 "use client";
 
 import { Bill } from "@/types/db";
-import { getBillDueDate, getDaysUntilDue, isRecurringBill } from "@/lib/utils/billDates";
+import {
+  getBillDueDate,
+  getDaysUntilDue,
+  isRecurringBill,
+  getFrequencyLabel,
+} from "@/lib/utils/billDates";
 
 interface BillListProps {
   bills: Bill[];
@@ -114,11 +119,9 @@ export default function BillList({
                         Archived
                       </span>
                     )}
-                    {isRecurring && (
-                      <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded">
-                        Recurring
-                      </span>
-                    )}
+                    <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded">
+                      {getFrequencyLabel(bill.frequency)}
+                    </span>
                     {bill.autopay && (
                       <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-xs font-medium rounded">
                         Autopay
@@ -160,9 +163,7 @@ export default function BillList({
                           : "text-gray-700"
                       }`}
                     >
-                      {isRecurring 
-                        ? `Due: ${formatDate(dueDate.toISOString())} (Day ${bill.due_day_of_month})`
-                        : `Due: ${formatDate(dueDate.toISOString())}`}
+                      Due: {formatDate(dueDate.toISOString())}
                       {urgency === "overdue" && " ⚠️"}
                       {urgency === "soon" && " 🔔"}
                     </div>

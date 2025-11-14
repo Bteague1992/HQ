@@ -69,72 +69,85 @@ INSERT INTO todos (user_id, title, description, category, priority, status, due_
 -- BILLS - Mix of utilities, loans, subscriptions
 -- ============================================
 
-INSERT INTO bills (user_id, account_name, bill_type, need_or_want, amount, balance, due_date, autopay, interest_rate, notes) VALUES
-  -- Utilities (autopay, recurring)
+INSERT INTO bills (user_id, account_name, bill_type, need_or_want, amount, balance, due_date, frequency, autopay, interest_rate, notes) VALUES
+  -- Utilities (autopay, monthly)
   ('550e8400-e29b-41d4-a716-446655440000'::uuid, 
    'Duke Energy', 'utility', 'need', 
-   145.75, NULL, CURRENT_DATE + INTERVAL '8 days', true, NULL, 
+   145.75, NULL, CURRENT_DATE + INTERVAL '8 days', 'monthly', true, NULL, 
    'Electric bill - usually higher in summer'),
   
   ('550e8400-e29b-41d4-a716-446655440000'::uuid, 
    'Verizon Wireless', 'phone_internet', 'need', 
-   89.99, NULL, CURRENT_DATE + INTERVAL '12 days', true, NULL, 
+   89.99, NULL, CURRENT_DATE + INTERVAL '12 days', 'monthly', true, NULL, 
    'Phone plan with unlimited data'),
   
   ('550e8400-e29b-41d4-a716-446655440000'::uuid, 
    'Spectrum Internet', 'phone_internet', 'need', 
-   79.99, NULL, CURRENT_DATE + INTERVAL '5 days', true, NULL, 
+   79.99, NULL, CURRENT_DATE + INTERVAL '5 days', 'monthly', true, NULL, 
    'High-speed internet'),
 
-  -- Loans (with balances and interest)
+  -- Loans (with balances and interest, monthly)
   ('550e8400-e29b-41d4-a716-446655440000'::uuid, 
    'Ford F-150 Truck Loan', 'loan', 'need', 
-   425.00, 18500.00, CURRENT_DATE + INTERVAL '18 days', false, 4.99, 
+   425.00, 18500.00, CURRENT_DATE + INTERVAL '18 days', 'monthly', false, 4.99, 
    'Work truck - 36 months remaining'),
   
   ('550e8400-e29b-41d4-a716-446655440000'::uuid, 
    'Home Equity Line', 'loan', 'need', 
-   275.00, 32000.00, CURRENT_DATE + INTERVAL '25 days', false, 6.75, 
+   275.00, 32000.00, CURRENT_DATE + INTERVAL '25 days', 'monthly', false, 6.75, 
    'Used for home improvements'),
 
-  -- Credit Cards
+  -- Credit Cards (monthly)
   ('550e8400-e29b-41d4-a716-446655440000'::uuid, 
    'Chase Freedom Card', 'credit_card', 'unsure', 
-   85.00, 1250.00, CURRENT_DATE + INTERVAL '15 days', false, 18.99, 
+   85.00, 1250.00, CURRENT_DATE + INTERVAL '15 days', 'monthly', false, 18.99, 
    'Trying to pay this down'),
   
   ('550e8400-e29b-41d4-a716-446655440000'::uuid, 
    'Lowe''s Business Card', 'credit_card', 'need', 
-   150.00, 3400.00, CURRENT_DATE + INTERVAL '20 days', false, 24.99, 
+   150.00, 3400.00, CURRENT_DATE + INTERVAL '20 days', 'monthly', false, 24.99, 
    'For equipment and materials - interest free for 12 months'),
 
-  -- Insurance
+  -- Insurance (semi-annual)
   ('550e8400-e29b-41d4-a716-446655440000'::uuid, 
    'State Farm Auto Insurance', 'insurance', 'need', 
-   185.00, NULL, CURRENT_DATE + INTERVAL '28 days', true, NULL, 
-   'Truck and personal vehicle'),
+   600.00, NULL, CURRENT_DATE + INTERVAL '28 days', 'semiannual', false, NULL, 
+   'Truck and personal vehicle - paid every 6 months'),
   
+  -- Insurance (annual)
   ('550e8400-e29b-41d4-a716-446655440000'::uuid, 
    'Teague Timber Liability Insurance', 'insurance', 'need', 
-   220.00, NULL, CURRENT_DATE + INTERVAL '10 days', false, NULL, 
-   'Business liability coverage'),
+   2400.00, NULL, CURRENT_DATE + INTERVAL '60 days', 'annual', false, NULL, 
+   'Business liability coverage - annual payment'),
 
-  -- Subscriptions
+  -- Subscriptions (monthly)
   ('550e8400-e29b-41d4-a716-446655440000'::uuid, 
    'YouTube Premium', 'subscription', 'want', 
-   13.99, NULL, CURRENT_DATE + INTERVAL '3 days', true, NULL, 
+   13.99, NULL, CURRENT_DATE + INTERVAL '3 days', 'monthly', true, NULL, 
    'Ad-free videos'),
   
   ('550e8400-e29b-41d4-a716-446655440000'::uuid, 
    'Netflix', 'subscription', 'want', 
-   15.49, NULL, CURRENT_DATE + INTERVAL '7 days', true, NULL, 
+   15.49, NULL, CURRENT_DATE + INTERVAL '7 days', 'monthly', true, NULL, 
    'Standard plan'),
 
-  -- Taxes
+  -- Weekly subscription
+  ('550e8400-e29b-41d4-a716-446655440000'::uuid, 
+   'Lawn Service', 'other', 'want', 
+   45.00, NULL, CURRENT_DATE + INTERVAL '4 days', 'weekly', false, NULL, 
+   'Weekly mowing during summer'),
+
+  -- Taxes (quarterly)
   ('550e8400-e29b-41d4-a716-446655440000'::uuid, 
    'Quarterly Estimated Taxes', 'tax', 'need', 
-   850.00, NULL, CURRENT_DATE + INTERVAL '45 days', false, NULL, 
-   'Q4 payment for business income');
+   850.00, NULL, CURRENT_DATE + INTERVAL '45 days', 'quarterly', false, NULL, 
+   'Q4 payment for business income'),
+
+  -- One-time payment
+  ('550e8400-e29b-41d4-a716-446655440000'::uuid, 
+   'Property Tax', 'tax', 'need', 
+   1850.00, NULL, CURRENT_DATE + INTERVAL '90 days', 'one_time', false, NULL, 
+   'Annual property tax payment');
 
 -- ============================================
 -- TEAGUE JOBS - Tree service jobs at various stages

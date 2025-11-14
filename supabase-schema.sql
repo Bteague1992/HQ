@@ -25,6 +25,18 @@ CREATE TYPE bill_type AS ENUM (
   'other'
 );
 
+-- Bill frequency
+CREATE TYPE bill_frequency AS ENUM (
+  'one_time',
+  'weekly',
+  'biweekly',
+  'monthly',
+  'bimonthly',
+  'quarterly',
+  'semiannual',
+  'annual'
+);
+
 -- Need vs want
 CREATE TYPE need_want AS ENUM ('need', 'want', 'unsure');
 
@@ -94,6 +106,7 @@ CREATE TABLE public.bills (
   balance       numeric(14,2),
 
   due_date      date NOT NULL,
+  frequency     bill_frequency NOT NULL DEFAULT 'monthly',
   autopay       boolean NOT NULL DEFAULT false,
   interest_rate numeric(5,2),
 
