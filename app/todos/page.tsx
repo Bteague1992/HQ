@@ -39,7 +39,7 @@ export default function TodosPage() {
     description: string;
     category: string;
     priority: TaskPriority;
-    due_date: string;
+    due_date: string | null;
   }) {
     try {
       const { data, error } = await supabase

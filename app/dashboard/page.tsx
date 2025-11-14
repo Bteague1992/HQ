@@ -15,6 +15,7 @@ import {
 } from "@/lib/data/dashboard";
 import { getBillsForUser } from "@/lib/data/bills";
 import { getTeagueJobsForUser } from "@/lib/data/teagueJobs";
+import { supabase } from "@/lib/supabase/client";
 import { Todo, Bill, TeagueJob } from "@/types/db";
 
 export default function DashboardPage() {
@@ -54,6 +55,23 @@ export default function DashboardPage() {
 
     fetchDashboardData();
   }, []);
+
+  async function handleMarkDone(todoId: string) {
+    try {
+      const { error } = await supabase
+        .from("todos")
+        .update({ status: "done", is_active: false })
+        .eq("id", todoId);
+
+      if (error) throw error;
+
+      // Remove from active todos list
+      setActiveTodos(activeTodos.filter((todo) => todo.id !== todoId));
+    } catch (error) {
+      console.error("Error marking todo as done:", error);
+      alert("Failed to mark todo as done. Please try again.");
+    }
+  }
 
   if (isLoading) {
     return (
@@ -98,7 +116,7 @@ export default function DashboardPage() {
       {/* Main Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Top Row */}
-        <TodaysTasks todos={activeTodos} />
+        <TodaysTasks todos={activeTodos} onMarkDone={handleMarkDone} />
         <UpcomingBills bills={upcomingBills} />
 
         {/* Bottom Row */}

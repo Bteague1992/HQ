@@ -107,9 +107,13 @@ export default function TodoList({
                   >
                     {statusLabels[todo.status]}
                   </span>
-                  {todo.due_date && (
+                  {todo.due_date ? (
                     <span className="text-gray-600">
                       Due: {new Date(todo.due_date).toLocaleDateString()}
+                    </span>
+                  ) : (
+                    <span className="px-2 py-1 bg-gray-100 text-gray-500 rounded">
+                      📌 No due date
                     </span>
                   )}
                 </div>

@@ -5,9 +5,10 @@ import Link from "next/link";
 
 interface TodaysTasksProps {
   todos: Todo[];
+  onMarkDone: (todoId: string) => void;
 }
 
-export default function TodaysTasks({ todos }: TodaysTasksProps) {
+export default function TodaysTasks({ todos, onMarkDone }: TodaysTasksProps) {
   const priorityColors = {
     low: "bg-gray-100 text-gray-700",
     medium: "bg-yellow-100 text-yellow-800",
@@ -61,13 +62,23 @@ export default function TodaysTasks({ todos }: TodaysTasksProps) {
                   >
                     {todo.priority}
                   </span>
-                  {todo.due_date && (
+                  {todo.due_date ? (
                     <span className="text-gray-600">
                       Due: {new Date(todo.due_date).toLocaleDateString()}
+                    </span>
+                  ) : (
+                    <span className="px-2 py-1 bg-white text-gray-500 rounded">
+                      📌 No due date
                     </span>
                   )}
                 </div>
               </div>
+              <button
+                onClick={() => onMarkDone(todo.id)}
+                className="px-3 py-1 text-xs font-medium bg-green-100 text-green-700 rounded hover:bg-green-200 transition-colors flex-shrink-0"
+              >
+                ✓ Done
+              </button>
             </div>
           </div>
         ))}

@@ -9,7 +9,7 @@ interface TodoFormProps {
     description: string;
     category: string;
     priority: TaskPriority;
-    due_date: string;
+    due_date: string | null;
   }) => Promise<boolean>;
 }
 
@@ -35,7 +35,7 @@ export default function TodoForm({ onAdd }: TodoFormProps) {
       description: description.trim(),
       category: category.trim(),
       priority,
-      due_date: dueDate,
+      due_date: dueDate || null,
     });
 
     if (success) {
@@ -140,6 +140,9 @@ export default function TodoForm({ onAdd }: TodoFormProps) {
               onChange={(e) => setDueDate(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
             />
+            <p className="text-xs text-gray-500 mt-1">
+              Optional - leave blank for no deadline
+            </p>
           </div>
         </div>
 
