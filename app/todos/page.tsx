@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import PageHeader from "@/components/PageHeader";
 import { getTodosForUser } from "@/lib/data/todos";
 import { supabase } from "@/lib/supabase/client";
-import { Todo, TaskPriority } from "@/types/db";
+import { Todo, TaskPriority, TaskStatus } from "@/types/db";
 import TodoForm from "@/components/TodoForm";
 import TodoList from "@/components/TodoList";
+import TodoFilters from "@/components/TodoFilters";
+import Modal from "@/components/Modal";
 
 const DEMO_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
 
@@ -14,6 +16,15 @@ export default function TodosPage() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Filter states
+  const [statusFilter, setStatusFilter] = useState<TaskStatus | "all">("all");
+  const [priorityFilter, setPriorityFilter] = useState<TaskPriority | "all">("all");
+  const [activeFilter, setActiveFilter] = useState<"all" | "active" | "inactive">("all");
+  const [dueDateFilter, setDueDateFilter] = useState<"all" | "overdue" | "soon" | "no_date" | "has_date">("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [hideCompleted, setHideCompleted] = useState(true); // Default: hide completed
 
   // Fetch todos on mount
   useEffect(() => {
@@ -61,6 +72,7 @@ export default function TodosPage() {
 
       // Add new todo to the list
       setTodos([data as Todo, ...todos]);
+      setIsModalOpen(false); // Close modal on success
       return true;
     } catch (err) {
       console.error("Error adding todo:", err);
@@ -136,12 +148,92 @@ export default function TodosPage() {
     }
   }
 
+  // Filter todos based on all active filters
+  const filteredTodos = useMemo(() => {
+    return todos.filter((todo) => {
+      // Hide completed by default
+      if (hideCompleted && todo.status === "done") return false;
+
+      // Status filter
+      if (statusFilter !== "all" && todo.status !== statusFilter) return false;
+
+      // Priority filter
+      if (priorityFilter !== "all" && todo.priority !== priorityFilter) return false;
+
+      // Active filter
+      if (activeFilter === "active" && !todo.is_active) return false;
+      if (activeFilter === "inactive" && todo.is_active) return false;
+
+      // Due date filter
+      if (dueDateFilter !== "all") {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        if (dueDateFilter === "no_date") {
+          if (todo.due_date !== null) return false;
+        } else if (dueDateFilter === "has_date") {
+          if (todo.due_date === null) return false;
+        } else if (todo.due_date) {
+          const dueDate = new Date(todo.due_date);
+          dueDate.setHours(0, 0, 0, 0);
+          const diffTime = dueDate.getTime() - today.getTime();
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+          if (dueDateFilter === "overdue" && diffDays >= 0) return false;
+          if (dueDateFilter === "soon" && (diffDays < 0 || diffDays > 7)) return false;
+        } else if (dueDateFilter === "overdue" || dueDateFilter === "soon") {
+          return false; // No due date, but filter requires one
+        }
+      }
+
+      // Search query
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        const matchesTitle = todo.title.toLowerCase().includes(query);
+        const matchesDescription = todo.description?.toLowerCase().includes(query);
+        const matchesCategory = todo.category?.toLowerCase().includes(query);
+        if (!matchesTitle && !matchesDescription && !matchesCategory) return false;
+      }
+
+      return true;
+    });
+  }, [todos, hideCompleted, statusFilter, priorityFilter, activeFilter, dueDateFilter, searchQuery]);
+
+  // Count active filters
+  const activeFilterCount = useMemo(() => {
+    let count = 0;
+    if (statusFilter !== "all") count++;
+    if (priorityFilter !== "all") count++;
+    if (activeFilter !== "all") count++;
+    if (dueDateFilter !== "all") count++;
+    if (searchQuery) count++;
+    return count;
+  }, [statusFilter, priorityFilter, activeFilter, dueDateFilter, searchQuery]);
+
+  function handleClearFilters() {
+    setStatusFilter("all");
+    setPriorityFilter("all");
+    setActiveFilter("all");
+    setDueDateFilter("all");
+    setSearchQuery("");
+  }
+
   return (
     <div>
-      <PageHeader
-        title="Todos"
-        subtitle="Capture and manage everything you need to do."
-      />
+      <div className="flex items-start justify-between mb-6">
+        <div className="flex-1">
+          <PageHeader
+            title="Todos"
+            subtitle="Capture and manage everything you need to do."
+          />
+        </div>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium flex-shrink-0"
+        >
+          + Add Todo
+        </button>
+      </div>
 
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -149,19 +241,55 @@ export default function TodosPage() {
         </div>
       )}
 
-      <div className="grid grid-cols-1 md:grid-cols-[2fr,3fr] gap-6">
-        {/* Left column: Add Todo form */}
-        <TodoForm onAdd={handleAddTodo} />
+      {/* Filters */}
+      <TodoFilters
+        statusFilter={statusFilter}
+        priorityFilter={priorityFilter}
+        activeFilter={activeFilter}
+        dueDateFilter={dueDateFilter}
+        searchQuery={searchQuery}
+        onStatusChange={setStatusFilter}
+        onPriorityChange={setPriorityFilter}
+        onActiveChange={setActiveFilter}
+        onDueDateChange={setDueDateFilter}
+        onSearchChange={setSearchQuery}
+        onClearFilters={handleClearFilters}
+        activeFilterCount={activeFilterCount}
+      />
 
-        {/* Right column: Todos list */}
-        <TodoList
-          todos={todos}
-          isLoading={isLoading}
-          onToggleActive={handleToggleActive}
-          onMarkDone={handleMarkDone}
-          onReopenTodo={handleReopenTodo}
-        />
+      {/* Toggle for hiding completed */}
+      <div className="mb-4 flex items-center justify-between">
+        <label className="flex items-center gap-2 text-sm text-gray-700">
+          <input
+            type="checkbox"
+            checked={hideCompleted}
+            onChange={(e) => setHideCompleted(e.target.checked)}
+            className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+          />
+          Hide completed todos
+        </label>
+        <span className="text-sm text-gray-500">
+          Showing {filteredTodos.length} of {todos.length} todos
+        </span>
       </div>
+
+      {/* Todos list */}
+      <TodoList
+        todos={filteredTodos}
+        isLoading={isLoading}
+        onToggleActive={handleToggleActive}
+        onMarkDone={handleMarkDone}
+        onReopenTodo={handleReopenTodo}
+      />
+
+      {/* Add Todo Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        title="Add New Todo"
+      >
+        <TodoForm onAdd={handleAddTodo} />
+      </Modal>
     </div>
   );
 }

@@ -51,9 +51,7 @@ export default function TodoForm({ onAdd }: TodoFormProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <h2 className="text-xl font-semibold mb-4">Add Todo</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label
             htmlFor="title"
@@ -146,15 +144,14 @@ export default function TodoForm({ onAdd }: TodoFormProps) {
           </div>
         </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-indigo-400 disabled:cursor-not-allowed font-medium"
-        >
-          {isSubmitting ? "Adding..." : "Add Todo"}
-        </button>
-      </form>
-    </div>
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-indigo-400 disabled:cursor-not-allowed font-medium"
+      >
+        {isSubmitting ? "Adding..." : "Add Todo"}
+      </button>
+    </form>
   );
 }
 

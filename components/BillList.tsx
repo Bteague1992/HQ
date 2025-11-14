@@ -14,6 +14,7 @@ interface BillListProps {
   onArchive: (billId: string) => void;
   onRestore: (billId: string) => void;
   onDelete: (billId: string) => void;
+  onEdit: (bill: Bill) => void;
 }
 
 export default function BillList({
@@ -22,6 +23,7 @@ export default function BillList({
   onArchive,
   onRestore,
   onDelete,
+  onEdit,
 }: BillListProps) {
   if (isLoading) {
     return (
@@ -168,9 +170,7 @@ export default function BillList({
                       {urgency === "soon" && " 🔔"}
                     </div>
                     {bill.interest_rate && (
-                      <span className="text-xs">
-                        {bill.interest_rate}% APR
-                      </span>
+                      <span className="text-xs">{bill.interest_rate}% APR</span>
                     )}
                   </div>
 
@@ -182,6 +182,12 @@ export default function BillList({
                 </div>
 
                 <div className="flex flex-col gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => onEdit(bill)}
+                    className="px-3 py-1 text-xs font-medium bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition-colors"
+                  >
+                    Edit
+                  </button>
                   {bill.is_active ? (
                     <button
                       onClick={() => onArchive(bill.id)}
@@ -212,4 +218,3 @@ export default function BillList({
     </div>
   );
 }
-

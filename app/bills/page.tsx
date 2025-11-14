@@ -9,6 +9,7 @@ import BillForm from "@/components/BillForm";
 import BillList from "@/components/BillList";
 import BillFilters from "@/components/BillFilters";
 import BillStats from "@/components/BillStats";
+import Modal from "@/components/Modal";
 
 const DEMO_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
 
@@ -16,6 +17,8 @@ export default function BillsPage() {
   const [bills, setBills] = useState<Bill[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingBill, setEditingBill] = useState<Bill | null>(null);
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState<
@@ -52,7 +55,7 @@ export default function BillsPage() {
     }
   }
 
-  async function handleAddBill(billData: {
+  async function handleSubmitBill(billData: {
     account_name: string;
     bill_type: BillType;
     need_or_want: NeedWant;
@@ -65,37 +68,78 @@ export default function BillsPage() {
     notes: string;
   }) {
     try {
-      const { data, error } = await supabase
-        .from("bills")
-        .insert({
-          user_id: DEMO_USER_ID,
-          account_name: billData.account_name,
-          bill_type: billData.bill_type,
-          need_or_want: billData.need_or_want,
-          amount: billData.amount,
-          balance: billData.balance,
-          due_date: billData.due_date,
-          frequency: billData.frequency,
-          autopay: billData.autopay,
-          interest_rate: billData.interest_rate,
-          notes: billData.notes || null,
-          is_active: true,
-        })
-        .select()
-        .single();
+      if (editingBill) {
+        // Update existing bill
+        const { data, error } = await supabase
+          .from("bills")
+          .update({
+            account_name: billData.account_name,
+            bill_type: billData.bill_type,
+            need_or_want: billData.need_or_want,
+            amount: billData.amount,
+            balance: billData.balance,
+            due_date: billData.due_date,
+            frequency: billData.frequency,
+            autopay: billData.autopay,
+            interest_rate: billData.interest_rate,
+            notes: billData.notes || null,
+          })
+          .eq("id", editingBill.id)
+          .select()
+          .single();
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // Add new bill and re-sort
-      const newBills = [data as Bill, ...bills].sort(
-        (a, b) =>
-          new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
-      );
-      setBills(newBills);
+        // Update local state
+        setBills(
+          bills
+            .map((bill) => (bill.id === editingBill.id ? (data as Bill) : bill))
+            .sort(
+              (a, b) =>
+                new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+            )
+        );
+      } else {
+        // Add new bill
+        const { data, error } = await supabase
+          .from("bills")
+          .insert({
+            user_id: DEMO_USER_ID,
+            account_name: billData.account_name,
+            bill_type: billData.bill_type,
+            need_or_want: billData.need_or_want,
+            amount: billData.amount,
+            balance: billData.balance,
+            due_date: billData.due_date,
+            frequency: billData.frequency,
+            autopay: billData.autopay,
+            interest_rate: billData.interest_rate,
+            notes: billData.notes || null,
+            is_active: true,
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+
+        // Add new bill and re-sort
+        const newBills = [data as Bill, ...bills].sort(
+          (a, b) =>
+            new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+        );
+        setBills(newBills);
+      }
+
+      setIsModalOpen(false);
+      setEditingBill(null);
       return true;
     } catch (err) {
-      console.error("Error adding bill:", err);
-      setError("Failed to add bill. Please try again.");
+      console.error("Error saving bill:", err);
+      setError(
+        editingBill
+          ? "Failed to update bill. Please try again."
+          : "Failed to add bill. Please try again."
+      );
       return false;
     }
   }
@@ -226,12 +270,37 @@ export default function BillsPage() {
     setSearchQuery("");
   }
 
+  function handleOpenAddModal() {
+    setEditingBill(null);
+    setIsModalOpen(true);
+  }
+
+  function handleOpenEditModal(bill: Bill) {
+    setEditingBill(bill);
+    setIsModalOpen(true);
+  }
+
+  function handleCloseModal() {
+    setIsModalOpen(false);
+    setEditingBill(null);
+  }
+
   return (
     <div>
-      <PageHeader
-        title="Bills & Due Dates"
-        subtitle="See what's coming and avoid surprises."
-      />
+      <div className="flex items-start justify-between mb-6">
+        <div className="flex-1">
+          <PageHeader
+            title="Bills & Due Dates"
+            subtitle="See what's coming and avoid surprises."
+          />
+        </div>
+        <button
+          onClick={handleOpenAddModal}
+          className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium flex-shrink-0"
+        >
+          + Add Bill
+        </button>
+      </div>
 
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -242,35 +311,40 @@ export default function BillsPage() {
       {/* Stats Row */}
       <BillStats bills={bills} />
 
-      <div className="grid grid-cols-1 md:grid-cols-[2fr,3fr] gap-6">
-        {/* Left column: Add Bill form */}
-        <BillForm onAdd={handleAddBill} />
+      {/* Filters */}
+      <BillFilters
+        statusFilter={statusFilter}
+        typeFilter={typeFilter}
+        needWantFilter={needWantFilter}
+        urgencyFilter={urgencyFilter}
+        searchQuery={searchQuery}
+        onStatusChange={setStatusFilter}
+        onTypeChange={setTypeFilter}
+        onNeedWantChange={setNeedWantFilter}
+        onUrgencyChange={setUrgencyFilter}
+        onSearchChange={setSearchQuery}
+        onClearFilters={handleClearFilters}
+        activeFilterCount={activeFilterCount}
+      />
 
-        {/* Right column: Bills list with filters */}
-        <div>
-          <BillFilters
-            statusFilter={statusFilter}
-            typeFilter={typeFilter}
-            needWantFilter={needWantFilter}
-            urgencyFilter={urgencyFilter}
-            searchQuery={searchQuery}
-            onStatusChange={setStatusFilter}
-            onTypeChange={setTypeFilter}
-            onNeedWantChange={setNeedWantFilter}
-            onUrgencyChange={setUrgencyFilter}
-            onSearchChange={setSearchQuery}
-            onClearFilters={handleClearFilters}
-            activeFilterCount={activeFilterCount}
-          />
-          <BillList
-            bills={filteredBills}
-            isLoading={isLoading}
-            onArchive={handleArchiveBill}
-            onRestore={handleRestoreBill}
-            onDelete={handleDeleteBill}
-          />
-        </div>
-      </div>
+      {/* Bills List */}
+      <BillList
+        bills={filteredBills}
+        isLoading={isLoading}
+        onArchive={handleArchiveBill}
+        onRestore={handleRestoreBill}
+        onDelete={handleDeleteBill}
+        onEdit={handleOpenEditModal}
+      />
+
+      {/* Add/Edit Bill Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title={editingBill ? "Edit Bill" : "Add New Bill"}
+      >
+        <BillForm bill={editingBill} onSubmit={handleSubmitBill} />
+      </Modal>
     </div>
   );
 }

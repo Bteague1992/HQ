@@ -5,7 +5,20 @@ import { BillType, NeedWant, BillFrequency } from "@/types/db";
 import { getFrequencyLabel } from "@/lib/utils/billDates";
 
 interface BillFormProps {
-  onAdd: (billData: {
+  bill?: {
+    id: string;
+    account_name: string;
+    bill_type: BillType;
+    need_or_want: NeedWant;
+    amount: number;
+    balance: number | null;
+    due_date: string;
+    frequency: BillFrequency;
+    autopay: boolean;
+    interest_rate: number | null;
+    notes: string | null;
+  } | null;
+  onSubmit: (billData: {
     account_name: string;
     bill_type: BillType;
     need_or_want: NeedWant;
@@ -19,17 +32,17 @@ interface BillFormProps {
   }) => Promise<boolean>;
 }
 
-export default function BillForm({ onAdd }: BillFormProps) {
-  const [accountName, setAccountName] = useState("");
-  const [billType, setBillType] = useState<BillType>("utility");
-  const [needOrWant, setNeedOrWant] = useState<NeedWant>("need");
-  const [amount, setAmount] = useState("");
-  const [balance, setBalance] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [frequency, setFrequency] = useState<BillFrequency>("monthly");
-  const [autopay, setAutopay] = useState(false);
-  const [interestRate, setInterestRate] = useState("");
-  const [notes, setNotes] = useState("");
+export default function BillForm({ bill, onSubmit }: BillFormProps) {
+  const [accountName, setAccountName] = useState(bill?.account_name || "");
+  const [billType, setBillType] = useState<BillType>(bill?.bill_type || "utility");
+  const [needOrWant, setNeedOrWant] = useState<NeedWant>(bill?.need_or_want || "need");
+  const [amount, setAmount] = useState(bill?.amount?.toString() || "");
+  const [balance, setBalance] = useState(bill?.balance?.toString() || "");
+  const [dueDate, setDueDate] = useState(bill?.due_date || "");
+  const [frequency, setFrequency] = useState<BillFrequency>(bill?.frequency || "monthly");
+  const [autopay, setAutopay] = useState(bill?.autopay || false);
+  const [interestRate, setInterestRate] = useState(bill?.interest_rate?.toString() || "");
+  const [notes, setNotes] = useState(bill?.notes || "");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -51,7 +64,7 @@ export default function BillForm({ onAdd }: BillFormProps) {
     }
 
     setIsSubmitting(true);
-    const success = await onAdd({
+    const success = await onSubmit({
       account_name: accountName.trim(),
       bill_type: billType,
       need_or_want: needOrWant,
@@ -82,9 +95,7 @@ export default function BillForm({ onAdd }: BillFormProps) {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
-      <h2 className="text-xl font-semibold mb-4">Add Bill</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label
             htmlFor="account_name"
@@ -294,14 +305,13 @@ export default function BillForm({ onAdd }: BillFormProps) {
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={isSubmitting}
-          className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-indigo-400 disabled:cursor-not-allowed font-medium"
-        >
-          {isSubmitting ? "Adding..." : "Add Bill"}
-        </button>
-      </form>
-    </div>
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors disabled:bg-indigo-400 disabled:cursor-not-allowed font-medium"
+      >
+        {isSubmitting ? (bill ? "Updating..." : "Adding...") : (bill ? "Update Bill" : "Add Bill")}
+      </button>
+    </form>
   );
 }
