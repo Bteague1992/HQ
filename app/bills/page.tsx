@@ -57,7 +57,8 @@ export default function BillsPage() {
     need_or_want: NeedWant;
     amount: number;
     balance: number | null;
-    due_date: string;
+    due_date: string | null;
+    due_day_of_month: number | null;
     autopay: boolean;
     interest_rate: number | null;
     notes: string;
@@ -73,6 +74,7 @@ export default function BillsPage() {
           amount: billData.amount,
           balance: billData.balance,
           due_date: billData.due_date,
+          due_day_of_month: billData.due_day_of_month,
           autopay: billData.autopay,
           interest_rate: billData.interest_rate,
           notes: billData.notes || null,

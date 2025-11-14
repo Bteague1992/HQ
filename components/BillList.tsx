@@ -1,6 +1,7 @@
 "use client";
 
 import { Bill } from "@/types/db";
+import { getBillDueDate, getDaysUntilDue, isRecurringBill } from "@/lib/utils/billDates";
 
 interface BillListProps {
   bills: Bill[];
@@ -56,16 +57,12 @@ export default function BillList({
   };
 
   // Helper function to determine if a bill is urgent
-  function getUrgency(dueDate: string): "overdue" | "soon" | "normal" {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const due = new Date(dueDate);
-    due.setHours(0, 0, 0, 0);
-    const diffTime = due.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  function getUrgency(bill: Bill): "overdue" | "soon" | "normal" {
+    const dueDate = getBillDueDate(bill);
+    const daysUntil = getDaysUntilDue(dueDate);
 
-    if (diffDays < 0) return "overdue";
-    if (diffDays <= 3) return "soon";
+    if (daysUntil < 0) return "overdue";
+    if (daysUntil <= 3) return "soon";
     return "normal";
   }
 
@@ -90,7 +87,9 @@ export default function BillList({
       <h2 className="text-xl font-semibold mb-4">All Bills ({bills.length})</h2>
       <div className="space-y-3">
         {bills.map((bill) => {
-          const urgency = getUrgency(bill.due_date);
+          const urgency = getUrgency(bill);
+          const dueDate = getBillDueDate(bill);
+          const isRecurring = isRecurringBill(bill);
           const urgencyStyles = {
             overdue: "border-l-4 border-red-500 bg-red-50",
             soon: "border-l-4 border-amber-500 bg-amber-50",
@@ -113,6 +112,11 @@ export default function BillList({
                     {!bill.is_active && (
                       <span className="px-2 py-0.5 bg-gray-200 text-gray-600 text-xs font-medium rounded">
                         Archived
+                      </span>
+                    )}
+                    {isRecurring && (
+                      <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-xs font-medium rounded">
+                        Recurring
                       </span>
                     )}
                     {bill.autopay && (
@@ -156,7 +160,9 @@ export default function BillList({
                           : "text-gray-700"
                       }`}
                     >
-                      Due: {formatDate(bill.due_date)}
+                      {isRecurring 
+                        ? `Due: ${formatDate(dueDate.toISOString())} (Day ${bill.due_day_of_month})`
+                        : `Due: ${formatDate(dueDate.toISOString())}`}
                       {urgency === "overdue" && " ⚠️"}
                       {urgency === "soon" && " 🔔"}
                     </div>

@@ -2,21 +2,13 @@
 
 import { Bill } from "@/types/db";
 import Link from "next/link";
+import { getBillDueDate, getDaysUntilDue, isRecurringBill } from "@/lib/utils/billDates";
 
 interface UpcomingBillsProps {
   bills: Bill[];
 }
 
 export default function UpcomingBills({ bills }: UpcomingBillsProps) {
-  function getDaysUntil(dateString: string): number {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const due = new Date(dateString);
-    due.setHours(0, 0, 0, 0);
-    const diffTime = due.getTime() - today.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    return diffDays;
-  }
 
   function formatCurrency(amount: number): string {
     return new Intl.NumberFormat("en-US", {
@@ -50,8 +42,10 @@ export default function UpcomingBills({ bills }: UpcomingBillsProps) {
       </div>
       <div className="space-y-3">
         {bills.map((bill) => {
-          const daysUntil = getDaysUntil(bill.due_date);
+          const dueDate = getBillDueDate(bill);
+          const daysUntil = getDaysUntilDue(dueDate);
           const isUrgent = daysUntil <= 3;
+          const isRecurring = isRecurringBill(bill);
 
           return (
             <div
@@ -79,6 +73,11 @@ export default function UpcomingBills({ bills }: UpcomingBillsProps) {
                         ? "Due tomorrow"
                         : `Due in ${daysUntil} days`}
                     </span>
+                    {isRecurring && (
+                      <span className="px-2 py-0.5 bg-purple-100 text-purple-700 rounded text-xs">
+                        Day {bill.due_day_of_month}
+                      </span>
+                    )}
                     {bill.autopay && (
                       <span className="px-2 py-0.5 bg-blue-100 text-blue-700 rounded">
                         Autopay
@@ -91,7 +90,7 @@ export default function UpcomingBills({ bills }: UpcomingBillsProps) {
                     {formatCurrency(bill.amount)}
                   </p>
                   <p className="text-xs text-gray-600">
-                    {new Date(bill.due_date).toLocaleDateString()}
+                    {dueDate.toLocaleDateString()}
                   </p>
                 </div>
               </div>
