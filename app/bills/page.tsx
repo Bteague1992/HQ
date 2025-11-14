@@ -8,6 +8,7 @@ import { Bill, BillType, NeedWant } from "@/types/db";
 import BillForm from "@/components/BillForm";
 import BillList from "@/components/BillList";
 import BillFilters from "@/components/BillFilters";
+import BillStats from "@/components/BillStats";
 
 const DEMO_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
 
@@ -237,6 +238,9 @@ export default function BillsPage() {
           <p className="text-red-700 text-sm">{error}</p>
         </div>
       )}
+
+      {/* Stats Row */}
+      <BillStats bills={bills} />
 
       <div className="grid grid-cols-1 md:grid-cols-[2fr,3fr] gap-6">
         {/* Left column: Add Bill form */}
